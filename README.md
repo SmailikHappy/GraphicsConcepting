@@ -2,6 +2,6 @@
 
 This project introduces wet spots from rain VFX
 
-https://github.com/SmailikHappy/GraphicsConcepting/raw/refs/heads/making-readme/github_assets/result-to-show.mp4
+https://github.com/user-attachments/assets/7670a075-07bb-450e-970f-47c56ade4d48
 
 ## Pipeline

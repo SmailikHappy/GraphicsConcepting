@@ -1,0 +1,65 @@
+#include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/ScreenPass.ush"
+
+
+float4x4 ViewProjection;
+Buffer<float3> RainDropPositionBuffer;
+Buffer<float3> RainDropNormalBuffer;
+Buffer<float> RainDropScaleBuffer;
+
+float3x3 NormalToRotationMatrix(float3 normal)
+{
+    // Find a vector in the plane
+    float3 tangent0 = cross(normal, float3(1.0f, 0.0f, 0.0f));
+    
+    if (dot(tangent0, tangent0) < 0.001f)
+        tangent0 = cross(normal, float3(0.0f, 1.0f, 0.0f));
+    
+    tangent0 = normalize(tangent0);
+    
+    // Find another vector in the plane
+    float3 tangent1 = normalize(cross(normal, tangent0));
+    
+    // Construct a 3x3 matrix by storing three vectors in the columns of the matrix
+    return float3x3(tangent0, tangent1, normal);
+}
+
+void MainVS(
+    in float3 InVertexPos : ATTRIBUTE0,
+    in float2 InUV : ATTRIBUTE1,
+    uint Id : SV_InstanceID,
+	out float4 OutPosition : SV_POSITION,
+	out float4 OutColor : COLOR0,
+    out float3 OutPixelPos: COLOR1)
+{   
+    float3 Position = RainDropPositionBuffer[Id];
+    float3 Normal = RainDropNormalBuffer[Id];
+    float Scale = RainDropScaleBuffer[Id];
+    
+    float3 newVertexPos = mul(InVertexPos * Scale, NormalToRotationMatrix(Normal)) + Position;
+    
+    OutPosition = mul(float4(newVertexPos, 1.0f), ViewProjection);
+    OutColor = float4(InUV.x, InUV.y, 1.0f, 1.0f);
+    OutPixelPos = newVertexPos;
+}
+
+//float4 Color;
+float3 ViewLocation;
+
+void MainPS(
+    in float4 InPosition : SV_POSITION,
+	in float4 InColor : COLOR0,
+    in float3 InPixelPos : COLOR1,
+	out float4 OutColor : SV_Target0)
+{
+    OutColor = float4(InColor.xy, length(InPixelPos - ViewLocation), 1.0f);
+}
+
+
+float4 ClearColor;
+
+float4 ClearRT() : SV_Target0
+{
+    return ClearColor;
+}
